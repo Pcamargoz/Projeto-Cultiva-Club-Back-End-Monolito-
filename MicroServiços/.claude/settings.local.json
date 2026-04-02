@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find C:/Users/pedro/OneDrive/Desktop/MicroServiços -maxdepth 3 -type f \\\\\\(-name *.yml -o -name *.yaml -o -name *.properties -o -name *.env* -o -name *.json -o -name *.ts -o -name *.js \\\\\\))",
+      "Bash(ls \"C:/Users/pedro/OneDrive/Desktop/MicroServiços/Front-END AL-TACADAO/Frontend-Projeto-Pessoal/\"*.env*)",
+      "Bash(find '/c/Users/pedro/OneDrive/Desktop/MicroServiços/Front-END AL-TACADAO/Frontend-Projeto-Pessoal/src' -type f \\\\\\(-name *.tsx -o -name *.ts -o -name *.html \\\\\\))",
+      "Bash(gh auth:*)",
+      "Bash(find C:UserspedroOneDriveDesktopMicroServiçosGATEWAY -type f \\\\\\(-name pom.xml -o -name application.yaml -o -name application.yml -o -name *.toml -o -name *.yml -o -name Dockerfile \\\\\\))",
+      "Bash(find '/c/Users/pedro/OneDrive/Desktop/MicroServiços/Front-END AL-TACADAO/Frontend-Projeto-Pessoal' -type f \\\\\\(-name *.env* -o -name api.ts -o -name api.js -o -name *axios* -o -name *fetch* -o -name *.config.ts -o -name *.config.js \\\\\\) ! -path */node_modules/*)",
+      "Bash(find '/c/Users/pedro/OneDrive/Desktop/MicroServiços/Front-END AL-TACADAO/Frontend-Projeto-Pessoal' -maxdepth 3 -type f ! -path */node_modules/*)",
+      "Bash(grep -E \"\\\\.\\(env|ts|js|jsx|tsx\\)$\")",
+      "Bash(find '/c/Users/pedro/OneDrive/Desktop/MicroServiços/Front-END AL-TACADAO/Frontend-Projeto-Pessoal/src' -type f \\\\\\(-name *.ts -o -name *.tsx -o -name *.js -o -name *.jsx \\\\\\) ! -path */node_modules/*)",
+      "Bash(grep -r \"@RabbitListener\\\\|@Queue\\\\|@Exchange\\\\|RabbitTemplate\\\\|AmqpTemplate\" /c/Users/pedro/OneDrive/Desktop/MicroServiços/ --include=*.java)",
+      "Bash(find C:/Users/pedro/OneDrive/Desktop/MicroServiços/GATEWAY -iname dockerfile -o -iname docker-compose.yml -o -iname .env -o -iname *.properties)",
+      "Bash(find C:/Users/pedro/OneDrive/Desktop/MicroServiços/GATEWAY -name *.java)",
+      "Bash(ls:*)",
+      "Bash(xargs grep:*)"
+    ]
+  }
+}
