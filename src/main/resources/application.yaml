@@ -1,12 +1,13 @@
 # ============================================================
 # CultivaClub - Monólito - Application Configuration
 # ============================================================
-# Estágio atual: SEM BANCO DE DADOS.
-# A autoconfiguração de DataSource/JPA está desabilitada para que
-# a aplicação suba sem precisar de Postgres. Quando o banco for
-# introduzido, basta:
-#   1) remover o bloco `spring.autoconfigure.exclude`
-#   2) preencher a seção `spring.datasource` com URL/usuário/senha
+# Arquitetura de dados: MULTI-DATASOURCE.
+#   - DataSource "usuarios" (primary) -> database supabase_usuarios
+#       * pacote: com.cultivaclub.monolito.usuarios.repository
+#   - DataSource "objetos"              -> database supabase_objetos
+#       * pacote: com.cultivaclub.monolito.objetos.repository
+# As variáveis de ambiente abaixo são as mesmas esperadas pelo
+# .env.example na raiz do projeto.
 # ============================================================
 
 server:
@@ -16,14 +17,90 @@ spring:
   application:
     name: CultivaClub-Monolito
 
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
-      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+  jpa:
+    open-in-view: false
+    hibernate:
+      # validate: Hibernate confere se o schema do banco (criado por DDL manual)
+      # bate com as entidades JPA. NÃO cria nem altera tabelas em produção.
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc.time_zone: UTC
+        format_sql: false
+    show-sql: ${JPA_SHOW_SQL:false}
 
+# ------------------------------------------------------------
+# Configurações de domínio da aplicação
+# ------------------------------------------------------------
 app:
+  # --------------------------------------------------------
+  # Conexões com as duas databases no mesmo projeto Supabase
+  # --------------------------------------------------------
+  datasources:
+    usuarios:
+      url: ${DB_USUARIOS_URL}
+      username: ${DB_USUARIOS_USERNAME}
+      password: ${DB_USUARIOS_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        pool-name: HikariPool-Usuarios
+        maximum-pool-size: ${DB_USUARIOS_POOL_MAX:5}
+        minimum-idle: ${DB_USUARIOS_POOL_MIN:1}
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+    objetos:
+      url: ${DB_OBJETOS_URL}
+      username: ${DB_OBJETOS_USERNAME}
+      password: ${DB_OBJETOS_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        pool-name: HikariPool-Objetos
+        maximum-pool-size: ${DB_OBJETOS_POOL_MAX:5}
+        minimum-idle: ${DB_OBJETOS_POOL_MIN:1}
+        connection-timeout: 30000
+        idle-timeout: 600000
+        max-lifetime: 1800000
+
+  # --------------------------------------------------------
+  # Autenticação (JWT)
+  # --------------------------------------------------------
   jwt:
-    secret: ${JWT_SECRET:changeme-dev-secret}
+    secret: ${JWT_SECRET}
     expiration: ${JWT_EXPIRATION:86400000}
+
+  # --------------------------------------------------------
+  # Role ADMIN reservada (configurada via variáveis de ambiente)
+  # --------------------------------------------------------
+  admin:
+    login: ${ADMIN_LOGIN:}
+    email: ${ADMIN_EMAIL:}
+    password: ${ADMIN_PASSWORD:}
+
+  # --------------------------------------------------------
+  # CORS - origens permitidas (lista separada por vírgula)
+  # Ex.: http://localhost:3000,https://cultivaclub.vercel.app
+  # --------------------------------------------------------
   cors:
     frontend-url: ${FRONTEND_URL:http://localhost:3000}
+
+# ------------------------------------------------------------
+# Actuator (health checks para o provider de deploy)
+# ------------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+  health:
+    db:
+      enabled: true
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.cultivaclub: ${LOG_LEVEL_APP:INFO}
