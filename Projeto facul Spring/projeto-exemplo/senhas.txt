@@ -1,8 +1,0 @@
-senha para o banco de dados :
-username: admin
-password: senha123
-
-
-Senha para o pgadmin :
-username : admin@admin.com
-password : admin
