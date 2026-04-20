@@ -39,6 +39,10 @@ public class CardsService {
 
     @Transactional
     public CardRespostaDTO criarCard(CardDTO dto) {
+        // A validação do tipo de usuário (PRO x comum) está encapsulada dentro
+        // de validarLimiteCards: se o usuário for PRO, o validator retorna sem
+        // checar nada; se for comum, aplica o limite de cards. Mantemos a
+        // lógica centralizada no ValidadorCardsPro para evitar duplicação.
         validator.validarLimiteCards(dto.idUsuario());
         Cards card = cardMapper.toEntity(dto);
         Cards salvo = cardsRepository.save(card);
