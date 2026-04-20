@@ -25,8 +25,15 @@ public class Tarefas {
     @Column(name = "descricao", length = 500)
     private String descricao;
 
-    @Column(name = "concluida", nullable = false)
-    private Boolean concluida = false;
+    /**
+     * Status da tarefa. Armazenado como texto no banco para ficar legível.
+     * Default: PENDENTE (ver {@link STATUS_TAREFAS}).
+     * EXCLUIDO é usado como soft delete — tarefas nesse estado não aparecem
+     * nos retornos normais da API.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20, nullable = false)
+    private STATUS_TAREFAS status = STATUS_TAREFAS.PENDENTE;
 
     @Column(name = "data_limite")
     private LocalDateTime dataLimite;

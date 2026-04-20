@@ -10,6 +10,16 @@ import java.util.UUID;
 
 public interface TarefasRepository extends JpaRepository<Tarefas, UUID> {
 
-    @Query("SELECT t FROM Tarefas t WHERE t.card.id_usuario = :userId AND t.dataLimite >= :inicio AND t.dataLimite < :fim")
+    /**
+     * Retorna tarefas de um usuário dentro de uma janela de tempo (data_limite),
+     * ignorando tarefas com status EXCLUIDO (soft delete).
+     */
+    @Query("""
+            SELECT t FROM Tarefas t
+            WHERE t.card.id_usuario = :userId
+              AND t.dataLimite >= :inicio
+              AND t.dataLimite < :fim
+              AND t.status <> com.cultivaclub.monolito.objetos.domain.STATUS_TAREFAS.EXCLUIDO
+            """)
     List<Tarefas> findByUsuarioAndDataLimiteBetween(UUID userId, LocalDateTime inicio, LocalDateTime fim);
 }

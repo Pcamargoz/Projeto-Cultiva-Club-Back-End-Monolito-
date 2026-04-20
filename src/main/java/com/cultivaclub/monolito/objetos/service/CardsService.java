@@ -3,6 +3,7 @@ package com.cultivaclub.monolito.objetos.service;
 import com.cultivaclub.monolito.common.exception.OperacaoNaoPermitida;
 import com.cultivaclub.monolito.common.exception.RecursoNaoEncontrado;
 import com.cultivaclub.monolito.objetos.domain.Cards;
+import com.cultivaclub.monolito.objetos.domain.STATUS_TAREFAS;
 import com.cultivaclub.monolito.objetos.domain.TIPO_ALIMENTOS;
 import com.cultivaclub.monolito.objetos.domain.Tarefas;
 import com.cultivaclub.monolito.objetos.repository.CardsRepository;
@@ -48,6 +49,7 @@ public class CardsService {
     public CardRespostaDTO buscarPorId(UUID id) {
         Cards card = cardsRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontrado("Card não encontrado: " + id));
+        filtrarTarefasExcluidas(card);
         return cardMapper.toRespostaDTO(card);
     }
 
@@ -65,6 +67,7 @@ public class CardsService {
         }
 
         Page<Cards> page = cardsRepository.findAll(spec, PageRequest.of(pagina, tamanhoPagina));
+        page.getContent().forEach(this::filtrarTarefasExcluidas);
         List<CardRespostaDTO> cards = page.getContent().stream()
                 .map(cardMapper::toRespostaDTO).toList();
 
@@ -85,6 +88,7 @@ public class CardsService {
         card.setAnotacoes(dto.anotacoes());
 
         Cards salvo = cardsRepository.save(card);
+        filtrarTarefasExcluidas(salvo);
         return cardMapper.toRespostaDTO(salvo);
     }
 
@@ -109,7 +113,7 @@ public class CardsService {
         tarefa.setTitulo(dto.titulo());
         tarefa.setDescricao(dto.descricao());
         tarefa.setDataLimite(dto.dataLimite());
-        tarefa.setConcluida(false);
+        tarefa.setStatus(STATUS_TAREFAS.PENDENTE);
         tarefa.setCard(card);
 
         card.getTarefas().add(tarefa);
@@ -129,17 +133,29 @@ public class CardsService {
         return cardMapper.toTarefaRespostaDTO(tarefa);
     }
 
+    /**
+     * Soft delete: marca a tarefa como EXCLUIDO em vez de apagar fisicamente.
+     * Isso preserva histórico e evita problemas de integridade referencial.
+     */
     @Transactional
     public void deletarTarefa(UUID cardId, UUID tarefaId) {
         Tarefas tarefa = findTarefa(cardId, tarefaId);
-        tarefa.getCard().getTarefas().remove(tarefa);
-        tarefasRepository.delete(tarefa);
+        tarefa.setStatus(STATUS_TAREFAS.EXCLUIDO);
+        tarefasRepository.save(tarefa);
     }
 
+    /**
+     * Alterna o status entre PENDENTE e CONCLUIDO.
+     * Tarefas EXCLUIDO não podem ser concluídas — o findTarefa já filtra.
+     */
     @Transactional
     public TarefaRespostaDTO concluirTarefa(UUID cardId, UUID tarefaId) {
         Tarefas tarefa = findTarefa(cardId, tarefaId);
-        tarefa.setConcluida(!tarefa.getConcluida());
+        if (tarefa.getStatus() == STATUS_TAREFAS.CONCLUIDO) {
+            tarefa.setStatus(STATUS_TAREFAS.PENDENTE);
+        } else {
+            tarefa.setStatus(STATUS_TAREFAS.CONCLUIDO);
+        }
         tarefasRepository.save(tarefa);
         return cardMapper.toTarefaRespostaDTO(tarefa);
     }
@@ -152,9 +168,21 @@ public class CardsService {
                 .stream().map(cardMapper::toTarefaRespostaDTO).toList();
     }
 
+    /**
+     * Remove da coleção carregada as tarefas com status EXCLUIDO, de modo que elas
+     * não apareçam nas respostas da API. A tarefa continua no banco (soft delete).
+     */
+    private void filtrarTarefasExcluidas(Cards card) {
+        if (card.getTarefas() == null) return;
+        card.getTarefas().removeIf(t -> t.getStatus() == STATUS_TAREFAS.EXCLUIDO);
+    }
+
     private Tarefas findTarefa(UUID cardId, UUID tarefaId) {
         Tarefas tarefa = tarefasRepository.findById(tarefaId)
                 .orElseThrow(() -> new RecursoNaoEncontrado("Tarefa não encontrada: " + tarefaId));
+        if (tarefa.getStatus() == STATUS_TAREFAS.EXCLUIDO) {
+            throw new RecursoNaoEncontrado("Tarefa " + tarefaId + " foi removida.");
+        }
         if (!tarefa.getCard().getId().equals(cardId)) {
             throw new RecursoNaoEncontrado("Tarefa " + tarefaId + " não pertence ao card " + cardId);
         }
