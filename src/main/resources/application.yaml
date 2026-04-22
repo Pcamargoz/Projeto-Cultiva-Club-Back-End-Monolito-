@@ -12,6 +12,10 @@
 
 server:
   port: ${SERVER_PORT:8080}
+  # Railway (e outros PaaS) ficam atrás de um proxy HTTPS. Sem estes headers,
+  # o Spring monta o redirect_uri do OAuth2 como "http://..." interno e o
+  # Google rejeita. Ativar a leitura de X-Forwarded-* resolve.
+  forward-headers-strategy: framework
 
 spring:
   application:
