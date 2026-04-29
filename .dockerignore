@@ -1,0 +1,43 @@
+# Build output (será regenerado dentro do container de build)
+target/
+**/target/
+
+# Git e CI
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+.factorypath
+.apt_generated/
+
+# Segredos locais — NUNCA enviar para a imagem
+.env
+.env.local
+.env.*.local
+
+# Documentação que não afeta o runtime
+README.md
+HELP.md
+
+# Logs e arquivos temporários
+*.log
+logs/
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Banco e migrações locais (DDL roda manualmente no Supabase)
+db/
